@@ -74,3 +74,12 @@ Después de realizar los cambios, la suite pasó de **26 a 29 tests**, y los 5 t
 ### Observación (no corregida)
 
 Con `knn`, el repo imputa las 4 columnas numéricas al mismo tiempo, pero el reporte cuenta solamente los nulos de la columna que se indicó en la función. Lo dejé de esta manera para no modificar el comportamiento que ya tiene el repositorio. Se podría revisar posteriormente si se necesita mejorar el reporte de esta estrategia.
+## 3. Auditoría de calidad (salida por consola de `cleaning_alvarado.py`)
+
+- `Tabla 'customer_credit_clean_alvarado' guardada: 2017 -> 2017 filas`
+- `Nulos tras normalizar: 146 | nulos finales: 0`
+- `Varianza annual_income: 711,013,895.22 -> 284,509,593.78` (reducción de ≈ 60 %)
+
+## 4. Reflexión: ¿por qué capping y no eliminar los registros atípicos?
+
+En riesgo crediticio los valores extremos de `annual_income` y `loan_amount` suelen ser clientes reales con alto ingreso o préstamos grandes, que son justamente los de mayor exposición. Eliminarlos dejaría un dataset sesgado hacia el cliente promedio y subestimaría el riesgo de la cartera. Además, borrar la fila descarta también datos válidos de ese cliente (edad, puntaje de crédito) y reduce la muestra. El capping conserva todos los registros (2017 en mi tabla) y limita la influencia de los extremos: la varianza de `annual_income` bajó cerca de 60 % sin perder una sola fila, lo que protege las medias y los modelos lineales de la distorsión. También deja trazabilidad: cada cliente sigue contabilizado, algo importante cuando el proceso puede auditarse. Tiene un costo: se pierde la magnitud real del extremo (un ingreso de 500K queda tratado como uno de unos 75K). Por eso el criterio correcto es separar los casos: los valores imposibles (fuera de rango de negocio) se tratan como error y se imputan, y los extremos plausibles se acotan en lugar de eliminarse.
